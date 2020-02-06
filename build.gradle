@@ -50,7 +50,7 @@ task generateSQLITE() {
                     }
                 }
             }
-    //org.jooq.codegen.GenerationTool.generate(writer.toString())
+    org.jooq.codegen.GenerationTool.generate(writer.toString())
 }
 
 //Create MTGJSON JooQ objects
@@ -60,7 +60,7 @@ task generateH2() {
             .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
                 jdbc() {
                     driver('org.h2.Driver')
-                    url('jdbc:h2:tcp://localhost:9092/mtg')
+                    url('jdbc:h2:file:./mtg')
                     user('sa')
                 }
                 generator() {
@@ -72,6 +72,6 @@ task generateH2() {
                     }
                 }
             }
-    //org.jooq.codegen.GenerationTool.generate(writer.toString())
+    org.jooq.codegen.GenerationTool.generate(writer.toString())
 }
 
