@@ -26,52 +26,58 @@ buildscript {
         classpath('com.h2database:h2:1.4.200')
     }
 }
-task generateSQLITE() {
+
 //Create MTGJSON JooQ objects
-    def writer = new StringWriter()
-    def xml = new groovy.xml.MarkupBuilder(writer)
-            .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
-                jdbc() {
-                    driver('org.sqlite.JDBC')
-                    url('jdbc:sqlite:AllPrintings.sqlite')
-                    user('sa')
-                    password('')
+tasks.register("generateSQLITE") {
+    doLast {
+        def writer = new StringWriter()
+        def xml = new groovy.xml.MarkupBuilder(writer)
+                .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
+                    jdbc() {
+                        driver('org.sqlite.JDBC')
+                        url('jdbc:sqlite:AllPrintings.sqlite')
+                        user('sa')
+                        password('')
+                    }
+                    generator() {
+                        database() {
+                        }
+                        generate([:]) {
+                            pojos true
+                            daos true
+                        }
+                        target() {
+                            packageName('com.mtgjson')
+                            directory('src/main/java')
+                        }
+                    }
                 }
-                generator() {
-                    database() {
-                    }
-                    generate([:]) {
-                        pojos true
-                        daos true
-                    }
-                    target() {
-                        packageName('com.mtgjson')
-                        directory('src/main/java')
-                    }
-                }
-            }
-    org.jooq.codegen.GenerationTool.generate(writer.toString())
+        org.jooq.codegen.GenerationTool.generate(writer.toString())
+    }
 }
 
 //Create MTGJSON JooQ objects
-task generateH2() {
-    def writer = new StringWriter()
-    def xml = new groovy.xml.MarkupBuilder(writer)
-            .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
-                jdbc() {
-                    driver('org.h2.Driver')
-                    url('jdbc:h2:file:./mtg')
-                    user('sa')
-                }
-                generator() {
-                    database() {
-                    }
-                    target() {
-                        packageName('com.cards')
-                        directory('src/main/java')
-                    }
-                }
-            }
-    org.jooq.codegen.GenerationTool.generate(writer.toString())
-}
 
+
+tasks.register("generateH2") {
+    doLast {
+        def writer = new StringWriter()
+        def xml = new groovy.xml.MarkupBuilder(writer)
+                .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
+                    jdbc() {
+                        driver('org.h2.Driver')
+                        url('jdbc:h2:file:./mtg')
+                        user('sa')
+                    }
+                    generator() {
+                        database() {
+                        }
+                        target() {
+                            packageName('com.cards')
+                            directory('src/main/java')
+                        }
+                    }
+                }
+        org.jooq.codegen.GenerationTool.generate(writer.toString())
+    }
+}
