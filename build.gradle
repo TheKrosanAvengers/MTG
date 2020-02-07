@@ -26,7 +26,7 @@ buildscript {
         classpath('com.h2database:h2:1.4.200')
     }
 }
-task generateSQLITE() {
+task generateSQLITE << {
 //Create MTGJSON JooQ objects
     def writer = new StringWriter()
     def xml = new groovy.xml.MarkupBuilder(writer)
@@ -54,7 +54,7 @@ task generateSQLITE() {
 }
 
 //Create MTGJSON JooQ objects
-task generateH2() {
+task generateH2 << {
     def writer = new StringWriter()
     def xml = new groovy.xml.MarkupBuilder(writer)
             .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
