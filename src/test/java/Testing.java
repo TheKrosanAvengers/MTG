@@ -7,7 +7,11 @@ public class Testing {
 
     @Test
     public void evaluatesExpression() {
-        System.out.println("Begin Test");
         assertEquals(1, 1);
+    }
+
+    @Test
+    public void evaluatesExpression2() {
+        assertEquals(1, 2);
     }
 }
