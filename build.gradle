@@ -1,4 +1,21 @@
-apply plugin: 'java'
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.jooq:jooq-codegen:3.12.3")
+        classpath("org.xerial:sqlite-jdbc:3.30.1")
+        classpath('com.h2database:h2:1.4.200')
+    }
+}
+
+
+plugins {
+    id "de.undercouch.download" version "4.0.4"
+    id 'java'
+}
 
 repositories {
     mavenLocal()
@@ -17,17 +34,9 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
 }
 
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
 
-    dependencies {
-        classpath("org.jooq:jooq-codegen:3.12.3")
-        classpath("org.xerial:sqlite-jdbc:3.30.1")
-        classpath('com.h2database:h2:1.4.200')
-    }
+test {
+    useJUnitPlatform()
 }
 
 test {
@@ -88,3 +97,10 @@ tasks.register("generateH2") {
         org.jooq.codegen.GenerationTool.generate(writer.toString())
     }
 }
+
+task downloadFile(type: Download) {
+    src 'https://www.mtgjson.com/files/AllPrintings.sqlite'
+    dest projectDir
+    overwrite true}
+
+tasks.build.dependsOn.add(downloadFile)
