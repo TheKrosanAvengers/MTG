@@ -101,6 +101,7 @@ tasks.register("generateH2") {
 task downloadFile(type: Download) {
     src 'https://www.mtgjson.com/files/AllPrintings.sqlite'
     dest projectDir
-    overwrite true}
+    overwrite true
+}
 
 tasks.build.dependsOn.add(downloadFile)
