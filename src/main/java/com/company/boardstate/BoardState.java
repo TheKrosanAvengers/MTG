@@ -10,7 +10,8 @@ public class BoardState {
     List<Player> players;
     Stack stack;
     PriorityManager priorityManager;
-    PhaseStep phaseStep;
+    PhaseStep phaseStep = new PhaseStep(PhaseEnum.BEGINNING, PhaseEnum.StepEnum.UNTAP);
+    Player currentPlayer;
 
     public BoardState(Player... players) {
         priorityManager = new PriorityManager(this);
@@ -19,6 +20,5 @@ public class BoardState {
             this.players.add(player);
         }
         stack = new Stack();
-
     }
 }
