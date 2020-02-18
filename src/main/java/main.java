@@ -6,8 +6,6 @@ import java.sql.DriverManager;
 public class main {
     public static void main(String[] args) {
 
-        //Adriano was here
-        //Dion was here
         Server server = null;
         try {
             server = Server.createTcpServer("-tcpAllowOthers", "-ifNotExists", "-baseDir", "./").start();
