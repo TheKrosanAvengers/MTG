@@ -1,3 +1,4 @@
+//dependencies for pre build stuff
 buildscript {
     repositories {
         mavenLocal()
@@ -11,17 +12,20 @@ buildscript {
     }
 }
 
-
+//Plugins for gradle build
 plugins {
     id "de.undercouch.download" version "4.0.4"
     id 'java'
 }
 
+//Repositories for java build dependencies
 repositories {
     mavenLocal()
     mavenCentral()
 }
 
+
+//Dependencies for Java build
 dependencies {
     compile("com.h2database:h2:1.4.200")
     compile("org.jooq:jooq:3.12.3")
@@ -34,16 +38,18 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
 }
 
+//Each of the MTG Applications
+task(startDB, dependsOn: 'classes', type: JavaExec) {
+    main = 'org.krosanavengers.mtg.main'
+    classpath = sourceSets.main.runtimeClasspath
+}
 
+//Settings for Java JUnit testing
 test {
     useJUnitPlatform()
 }
 
-test {
-    useJUnitPlatform()
-}
-
-//Create MTGJSON JooQ objects
+//=======   Generate MTGJSON JooQ objects   ===============
 tasks.register("generateSQLITE") {
     doLast {
         def writer = new StringWriter()
@@ -63,7 +69,7 @@ tasks.register("generateSQLITE") {
                             daos true
                         }
                         target() {
-                            packageName('com.mtgjson')
+                            packageName('org.krosanavengers.mtg.jooq.mtgjson')
                             directory('src/main/java')
                         }
                     }
@@ -72,9 +78,8 @@ tasks.register("generateSQLITE") {
     }
 }
 
-//Create MTGJSON JooQ objects
 
-
+//=======   Create MTG JooQ objects   ===============
 tasks.register("generateH2") {
     doLast {
         def writer = new StringWriter()
@@ -89,7 +94,7 @@ tasks.register("generateH2") {
                         database() {
                         }
                         target() {
-                            packageName('com.cards')
+                            packageName('org.krosanavengers.mtg.jooq.h2')
                             directory('src/main/java')
                         }
                     }
@@ -98,10 +103,12 @@ tasks.register("generateH2") {
     }
 }
 
+
+//=======   Download Latest copy of MTGJSON sqlite db   ===============
 task downloadFile(type: Download) {
     src 'https://www.mtgjson.com/files/AllPrintings.sqlite'
     dest projectDir
     overwrite true
 }
+//tasks.processResources.dependsOn.add(downloadFile)
 
-tasks.build.dependsOn.add(downloadFile)
