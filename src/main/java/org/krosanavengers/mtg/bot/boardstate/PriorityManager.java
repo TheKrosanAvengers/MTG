@@ -33,7 +33,7 @@ public class PriorityManager {
 
     public void passPriority(Player player) {
         priority.put(player, true);
-        check(player.next());
+        check(player.getNext());
     }
 
 
