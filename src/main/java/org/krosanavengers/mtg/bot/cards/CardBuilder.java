@@ -23,6 +23,10 @@ public class CardBuilder extends Card {
         return this;
     }
 
+    public CardBuilder setSuperTypes(String... types) {
+        return setSuperTypes(Arrays.asList(types));
+    }
+
     public CardBuilder setTypes(List<String> types) {
         this.types = types;
         return this;
@@ -35,6 +39,10 @@ public class CardBuilder extends Card {
     public CardBuilder setSubTypes(List<String> subTypes) {
         this.subTypes = subTypes;
         return this;
+    }
+
+    public CardBuilder setSubTypes(String... types) {
+        return setSubTypes(Arrays.asList(types));
     }
 
     public CardBuilder setAbilities(List<String> abilities) {

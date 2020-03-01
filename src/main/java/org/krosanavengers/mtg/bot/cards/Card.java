@@ -12,6 +12,7 @@ public class Card implements Cloneable {
     protected int power;
     protected int toughness;
 
+
     boolean tapped = false;
 
     public Card() {
@@ -35,6 +36,21 @@ public class Card implements Cloneable {
 
     public boolean checkType(String type) {
         return types.contains(type);
+    }
+
+    @Override
+    public String toString() {
+        return "Card{" +
+                "name=" + name +
+                ", cost=" + cost +
+                ", superTypes=" + superTypes +
+                ", types=" + types +
+                ", subTypes=" + subTypes +
+                ", abilities=" + abilities +
+                ", power=" + power +
+                ", toughness=" + toughness +
+                ", tapped=" + tapped +
+                '}';
     }
 
     @Override
