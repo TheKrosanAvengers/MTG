@@ -10,14 +10,14 @@ public class PhaseStep {
     }
 
     public PhaseEnum getPhaseEnum() {
-        return phaseEnum;
+        return this.phaseEnum;
     }
 
     public PhaseEnum.StepEnum getStepEnum() {
-        return stepEnum;
+        return this.stepEnum;
     }
 
     public void next() {
-
+        //todo
     }
 }

@@ -7,29 +7,31 @@ import java.util.List;
 
 public class Card implements Cloneable {
     @Expose
-    protected String name;
+    private String name;
     @Expose
-    protected List<String> cost;
+    private List<String> cost;
     @Expose
-    protected List<String> superTypes;
+    private List<String> superTypes;
     @Expose
-    protected List<String> types;
+    private List<String> types;
     @Expose
-    protected List<String> subTypes;
+    private List<String> subTypes;
     @Expose
-    protected List<String> abilities;
+    private List<String> abilities;
     @Expose
-    protected int power;
+    private String power;
     @Expose
-    protected int toughness;
+    private String toughness;
     @Expose
     boolean tapped = false;
+    @Expose
+    boolean canUntap = true;
 
     public Card() {
     }
 
 
-    private Card(String name, List<String> cost, List<String> superTypes, List<String> types, List<String> subTypes, List<String> abilities, int power, int toughness) {
+    public Card(final String name, final List<String> cost, final List<String> superTypes, final List<String> types, final List<String> subTypes, final List<String> abilities, final String power, final String toughness) {
         this.name = name;
         this.cost = cost;
         this.superTypes = superTypes;
@@ -41,25 +43,97 @@ public class Card implements Cloneable {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
-    public boolean checkType(String type) {
+    public boolean checkType(final String type) {
         return types.contains(type);
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<String> getCost() {
+        return cost;
+    }
+
+    public void setCost(List<String> cost) {
+        this.cost = cost;
+    }
+
+    public List<String> getSuperTypes() {
+        return superTypes;
+    }
+
+    public void setSuperTypes(List<String> superTypes) {
+        this.superTypes = superTypes;
+    }
+
+    public List<String> getTypes() {
+        return types;
+    }
+
+    public void setTypes(List<String> types) {
+        this.types = types;
+    }
+
+    public List<String> getSubTypes() {
+        return subTypes;
+    }
+
+    public void setSubTypes(List<String> subTypes) {
+        this.subTypes = subTypes;
+    }
+
+    public List<String> getAbilities() {
+        return abilities;
+    }
+
+    public void setAbilities(List<String> abilities) {
+        this.abilities = abilities;
+    }
+
+    public String getPower() {
+        return power;
+    }
+
+    public void setPower(String power) {
+        this.power = power;
+    }
+
+    public String getToughness() {
+        return toughness;
+    }
+
+    public void setToughness(String toughness) {
+        this.toughness = toughness;
+    }
+
+    public boolean isTapped() {
+        return tapped;
+    }
+
+    public boolean isCanUntap() {
+        return this.canUntap;
+    }
+
+    public void setCanUntap(final boolean canUntap) {
+        this.canUntap = canUntap;
+    }
+
+    public void setTapped(boolean tapped) {
+        this.tapped = tapped;
     }
 
     @Override
     public Object clone() {
-        return new Card(name, cost, superTypes, types
-                , subTypes, abilities, power, toughness);
+        return new Card(this.name, this.cost, this.superTypes, this.types
+                , this.subTypes, this.abilities, this.power, this.toughness);
     }
 
     @Override
     public String toString() {
-        return toJson();
-    }
-
-    public String toJson() {
         return GsonUtil.toJson(this);
     }
 }

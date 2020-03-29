@@ -11,6 +11,4 @@ public class GsonUtil {
     public static <T> T fromJson(String object, Class<T> clazz) {
         return new Gson().fromJson(object, clazz);
     }
-
-
 }

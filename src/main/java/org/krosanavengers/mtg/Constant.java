@@ -6,6 +6,7 @@ public interface Constant {
     int PlayerLandPerTurn = 1;
     boolean FirstTurnDraw = true;
     String betweenQuotes = "\"(.*?)\"";
+    String landCardType = "Land";
 
     String sqliteURL = "jdbc:sqlite:AllPrintings.sqlite";
     String h2URL = "jdbc:h2:tcp://localhost/mtg";

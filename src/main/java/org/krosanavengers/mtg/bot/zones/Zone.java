@@ -10,9 +10,9 @@ public abstract class Zone implements Cloneable {
 
     //index 0 is 'top' of library, N'th is 'bottom'
     @Expose
-    List<Card> cards;
+    private List<Card> cards;
     @Expose
-    ZoneEnum zoneEnum;
+    private ZoneEnum zoneEnum;
 
     public Zone(ZoneEnum zoneEnum) {
         this.cards = new ArrayList<>();
@@ -88,7 +88,19 @@ public abstract class Zone implements Cloneable {
     }
 
     public List<Card> getCards() {
-        return cards;
+        return this.cards;
+    }
+
+    public void setCards(final List<Card> cards) {
+        this.cards = cards;
+    }
+
+    public ZoneEnum getZoneEnum() {
+        return this.zoneEnum;
+    }
+
+    public void setZoneEnum(final ZoneEnum zoneEnum) {
+        this.zoneEnum = zoneEnum;
     }
 
     @Override
@@ -97,12 +109,7 @@ public abstract class Zone implements Cloneable {
     }
 
     @Override
-    public String toString() {
-        return toJson();
-    }
+    public String toString() {return GsonUtil.toJson(this); }
 
-    public String toJson() {
-        return GsonUtil.toJson(this);
-    }
 
 }

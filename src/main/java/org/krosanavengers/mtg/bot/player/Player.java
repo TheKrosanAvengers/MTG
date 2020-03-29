@@ -1,9 +1,12 @@
 package org.krosanavengers.mtg.bot.player;
 
 import com.google.gson.annotations.Expose;
+import org.krosanavengers.mtg.Constant;
 import org.krosanavengers.mtg.bot.boardstate.BoardState;
+import org.krosanavengers.mtg.bot.boardstate.PhaseEnum;
 import org.krosanavengers.mtg.bot.util.CardUtil;
 import org.krosanavengers.mtg.bot.util.GsonUtil;
+import org.krosanavengers.mtg.bot.util.ZoneUtil;
 import org.krosanavengers.mtg.bot.zones.*;
 import org.krosanavengers.mtg.exceptions.InsufficientCardsInZone;
 
@@ -19,13 +22,20 @@ public class Player implements Cloneable {
     private Player next;
     @Expose
     private String name;
+    @Expose
+    private int maxHandSize = 7;
+    @Expose
+    private int drawStepAmount = 1;
+    @Expose
+    private boolean untapOnOtherPlayersTurn = false;
 
-    public Player(String name) {
+    public Player(final String name) {
         this.name = name;
         this.zoneMap.put(ZoneEnum.HAND, new Hand());
         this.zoneMap.put(ZoneEnum.GRAVEYARD, new Graveyard());
         this.zoneMap.put(ZoneEnum.LIBRARY, new Library());
         this.zoneMap.put(ZoneEnum.EXILE, new Exile());
+        this.zoneMap.put(ZoneEnum.BATTLEFIELD, new Battlefield());
     }
 
 
@@ -34,10 +44,41 @@ public class Player implements Cloneable {
     }
 
     public void check(BoardState boardState) {
-
+        if (boardState.getCurrentPlayer() == this) {
+            if (boardState.getPhaseStep().getPhaseEnum() == PhaseEnum.BEGINNING && boardState.getPhaseStep().getStepEnum() == PhaseEnum.StepEnum.UNTAP) {
+                doUntapStep();
+            } else if (boardState.getPhaseStep().getPhaseEnum() == PhaseEnum.BEGINNING && boardState.getPhaseStep().getStepEnum() == PhaseEnum.StepEnum.UPKEEP) {
+                doUpkeep();
+            } else if (boardState.getPhaseStep().getPhaseEnum() == PhaseEnum.BEGINNING && boardState.getPhaseStep().getStepEnum() == PhaseEnum.StepEnum.DRAW) {
+                doDraw();
+            }
+        }
     }
 
-    public void addZone(ZoneEnum zoneEnum, Zone zone) {
+    public void doUntapStep() {
+        ZoneUtil.untapAllCards(getZone(ZoneEnum.BATTLEFIELD));
+    }
+
+    public void doUpkeep() {
+    }
+
+    public void doDraw() {
+        try {
+            CardUtil.playerDrawFromLibrary(this, this.drawStepAmount);
+        } catch (InsufficientCardsInZone insufficientCardsInZone) {
+            insufficientCardsInZone.printStackTrace();
+        }
+    }
+
+    public boolean checkVictory() {
+        boolean victory = false;
+        if (ZoneUtil.countCardTypeInZone(this.zoneMap.get(ZoneEnum.BATTLEFIELD), Constant.landCardType) == 10) {
+            victory = true;
+        }
+        return victory;
+    }
+
+    public void addZone(ZoneEnum zoneEnum, final Zone zone) {
         try {
             this.zoneMap.put(zoneEnum, (Zone) zone.clone());
         } catch (CloneNotSupportedException e) {
@@ -57,7 +98,7 @@ public class Player implements Cloneable {
 
         //Draw Seven
         try {
-            CardUtil.playerDrawFromLibrary(this, 7);
+            CardUtil.playerDrawFromLibrary(this, this.maxHandSize);
         } catch (InsufficientCardsInZone insufficientCardsInZone) {
             insufficientCardsInZone.printStackTrace();
         }
@@ -65,27 +106,51 @@ public class Player implements Cloneable {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
     public int getLife() {
-        return life;
+        return this.life;
     }
 
-    public void setLife(int life) {
+    public void setLife(final int life) {
         this.life = life;
     }
 
     public Player getNext() {
-        return next;
+        return this.next;
     }
 
-    public void setNext(Player next) {
+    public void setNext(final Player next) {
         this.next = next;
+    }
+
+    public Map<ZoneEnum, Zone> getZoneMap() {
+        return zoneMap;
+    }
+
+    public void setZoneMap(final Map<ZoneEnum, Zone> zoneMap) {
+        this.zoneMap = zoneMap;
+    }
+
+    public int getMaxHandSize() {
+        return this.maxHandSize;
+    }
+
+    public void setMaxHandSize(final int maxHandSize) {
+        this.maxHandSize = maxHandSize;
+    }
+
+    public boolean isUntapOnOtherPlayersTurn() {
+        return this.untapOnOtherPlayersTurn;
+    }
+
+    public void setUntapOnOtherPlayersTurn(final boolean untapOnOtherPlayersTurn) {
+        this.untapOnOtherPlayersTurn = untapOnOtherPlayersTurn;
     }
 
     @Override
@@ -101,10 +166,6 @@ public class Player implements Cloneable {
 
     @Override
     public String toString() {
-        return toJson();
-    }
-
-    public String toJson() {
         return GsonUtil.toJson(this);
     }
 }

@@ -9,44 +9,42 @@ import java.util.Map;
 
 public class PriorityManager {
     @Expose
-    Map<Player, Boolean> priority = new HashMap<>();
+    private Map<Player, Boolean> priority = new HashMap<>();
 
-    BoardState boardState;
+    private BoardState boardState;
 
-    public PriorityManager(BoardState boardState) {
+    public PriorityManager(final BoardState boardState) {
         this.boardState = boardState;
     }
 
-    public void addPlayer(Player... players) {
+    public void addPlayer(final Player... players) {
         for (Player player : players) {
-            priority.put(player, false);
+            this.priority.put(player, false);
         }
     }
 
-    public void resetPriority(Player player) {
-        for (Boolean value : priority.values()) {
+    public void resetPriority(final Player player) {
+        for (Boolean value : this.priority.values()) {
             value = false;
         }
         check(player);
     }
 
     public void check(Player player) {
-        player.check(boardState);
+        player.check(this.boardState);
     }
 
-    public void passPriority(Player player) {
-        priority.put(player, true);
+    public void passPriority(final Player player) {
+        this.priority.put(player, true);
         check(player.getNext());
     }
 
     @Override
     public String toString() {
-        return toJson();
+        return GsonUtil.toJson(this);
+
     }
 
-    public String toJson() {
-        return GsonUtil.toJson(this);
-    }
 
 
 }
