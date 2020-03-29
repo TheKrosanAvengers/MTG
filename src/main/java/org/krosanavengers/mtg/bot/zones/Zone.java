@@ -1,14 +1,17 @@
 package org.krosanavengers.mtg.bot.zones;
 
+import com.google.gson.annotations.Expose;
 import org.krosanavengers.mtg.bot.cards.Card;
+import org.krosanavengers.mtg.bot.util.GsonUtil;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class Zone implements Cloneable {
 
     //index 0 is 'top' of library, N'th is 'bottom'
+    @Expose
     List<Card> cards;
+    @Expose
     ZoneEnum zoneEnum;
 
     public Zone(ZoneEnum zoneEnum) {
@@ -95,12 +98,11 @@ public abstract class Zone implements Cloneable {
 
     @Override
     public String toString() {
-        return "Zone{" +
-                "name=" + zoneEnum +
-                ", Cards{" + getCards().stream().map(Card::toString).collect(Collectors.joining(
-                "\n, ")) +
-                "}}";
+        return toJson();
     }
 
+    public String toJson() {
+        return GsonUtil.toJson(this);
+    }
 
 }

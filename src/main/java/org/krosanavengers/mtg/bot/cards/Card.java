@@ -1,18 +1,28 @@
 package org.krosanavengers.mtg.bot.cards;
 
+import com.google.gson.annotations.Expose;
+import org.krosanavengers.mtg.bot.util.GsonUtil;
+
 import java.util.List;
 
 public class Card implements Cloneable {
+    @Expose
     protected String name;
+    @Expose
     protected List<String> cost;
+    @Expose
     protected List<String> superTypes;
+    @Expose
     protected List<String> types;
+    @Expose
     protected List<String> subTypes;
+    @Expose
     protected List<String> abilities;
+    @Expose
     protected int power;
+    @Expose
     protected int toughness;
-
-
+    @Expose
     boolean tapped = false;
 
     public Card() {
@@ -39,23 +49,17 @@ public class Card implements Cloneable {
     }
 
     @Override
-    public String toString() {
-        return "Card{" +
-                "name=" + name +
-                ", cost=" + cost +
-                ", superTypes=" + superTypes +
-                ", types=" + types +
-                ", subTypes=" + subTypes +
-                ", abilities=" + abilities +
-                ", power=" + power +
-                ", toughness=" + toughness +
-                ", tapped=" + tapped +
-                '}';
-    }
-
-    @Override
     public Object clone() {
         return new Card(name, cost, superTypes, types
                 , subTypes, abilities, power, toughness);
+    }
+
+    @Override
+    public String toString() {
+        return toJson();
+    }
+
+    public String toJson() {
+        return GsonUtil.toJson(this);
     }
 }

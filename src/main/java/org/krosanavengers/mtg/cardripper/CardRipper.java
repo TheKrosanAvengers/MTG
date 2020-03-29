@@ -1,121 +1,117 @@
 package org.krosanavengers.mtg.cardripper;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jooq.Record9;
-import org.jooq.Result;
-import org.jooq.exception.DataAccessException;
-import org.krosanavengers.mtg.Constant;
-import org.krosanavengers.mtg.jooq.h2.public_.tables.Cardnonstaticabilities;
-import org.krosanavengers.mtg.jooq.h2.public_.tables.Nonstaticabilities;
-import org.krosanavengers.mtg.jooq.h2.public_.tables.records.CardsRecord;
-import org.krosanavengers.mtg.jooq.h2.public_.tables.records.NonstaticabilitiesRecord;
-import org.krosanavengers.mtg.jooq.mtgjson.tables.Cards;
-import org.krosanavengers.mtg.jooq.mtgjson.tables.Legalities;
-import org.krosanavengers.mtg.utilities.DatabaseFactory;
+import org.krosanavengers.mtg.database.DatabaseFactory;
+import org.krosanavengers.mtg.database.mtg.dto.CardDTO;
+import org.krosanavengers.mtg.database.mtg.dto.TypeDTO;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CardRipper {
+
     public static void main(String[] args) {
-        try {
-            DatabaseFactory.start();
-            Result<Record9<String, String, Float, String, String, String, String, String, String>> cards = DatabaseFactory.getSqliteDSL().selectDistinct(
-                    Cards.CARDS.NAME,
-                    Cards.CARDS.MANACOST,
-                    Cards.CARDS.CONVERTEDMANACOST,
-                    Cards.CARDS.SUPERTYPES, Cards.CARDS.TYPES,
-                    Cards.CARDS.SUBTYPES,
-                    Cards.CARDS.TEXT,
-                    Cards.CARDS.POWER,
-                    Cards.CARDS.TOUGHNESS).from(Cards.CARDS)
-                    .innerJoin(Legalities.LEGALITIES).on(Legalities.LEGALITIES.UUID.eq(Cards.CARDS.UUID))
-                    .where(Legalities.LEGALITIES.FORMAT.eq("brawl"))
-                    .orderBy(Cards.CARDS.NAME)
-                    //.limit(100)
-                    .fetch();
-            int count = 0;
-            for (Record9<String, String, Float, String, String, String, String, String, String> card : cards) {
-                String name = card.component1();
-                String manaCost = card.component2();
-                int convertedManaCost = card.component3().intValue();
-                String[] superTypes = card.component4() == null ? new String[]{} : card.component4().split(",");
-                String[] types = card.component5() == null ? new String[]{} : card.component5().split(",");
-                String[] subTypes = card.component6() == null ? new String[]{} : card.component6().split(",");
-                String text = card.component7() == null ? "" : card.component7().replace("—", "-").replace(name, Constant.cardName);
-                Integer power = Integer.getInteger(card.component8());
-                Integer toughness = Integer.getInteger(card.component9());
+        DatabaseFactory.start();
 
-                text = text.replaceAll("\u2014", "-").replaceAll("\u2022", ">")
-                        .replaceAll("\n>", ">");
-                String[] paragraphs = text.split("\n");
+        try (Connection sqliteConnection = DatabaseFactory.getSqliteConnection()) {
+            try (Connection h2Connection = DatabaseFactory.getH2Connection()) {
 
-                CardsRecord cardsRecord = DatabaseFactory.getH2DSL().insertInto(org.krosanavengers.mtg.jooq.h2.public_.tables.Cards.CARDS,
-                        org.krosanavengers.mtg.jooq.h2.public_.tables.Cards.CARDS.NAME,
-                        org.krosanavengers.mtg.jooq.h2.public_.tables.Cards.CARDS.CMC,
-                        org.krosanavengers.mtg.jooq.h2.public_.tables.Cards.CARDS.COST,
-                        org.krosanavengers.mtg.jooq.h2.public_.tables.Cards.CARDS.POWER,
-                        org.krosanavengers.mtg.jooq.h2.public_.tables.Cards.CARDS.TOUGHNESS).values(name,
-                        convertedManaCost, manaCost, power, toughness).onDuplicateKeyIgnore().returning(org.krosanavengers.mtg.jooq.h2.public_.tables.Cards.CARDS.ID)
-                        .fetchOne();
+                String fromSqlite = "select max(multiverseId) multiverseId,\n" +
+                        "       name,\n" +
+                        "       convertedManaCost,\n" +
+                        "       manaCost,\n" +
+                        "       colorIdentity,\n" +
+                        "       supertypes,\n" +
+                        "       types,\n" +
+                        "       subtypes,\n" +
+                        "       text,\n" +
+                        "       power,\n" +
+                        "       toughness\n" +
+                        "from cards\n" +
+                        "inner join legalities on cards.uuid = legalities.uuid\n" +
+                        "where multiverseId IS NOT NULL and multiverseId > ?\n" +
+                        "group by  name,\n" +
+                        "          convertedManaCost,\n" +
+                        "          manaCost,\n" +
+                        "          colorIdentity,\n" +
+                        "          supertypes,\n" +
+                        "          types,\n" +
+                        "          subtypes,\n" +
+                        "          text,\n" +
+                        "          power,\n" +
+                        "          toughness\n" +
+                        "order by multiverseId\n" +
+                        "limit 1000\n" +
+                        "\n" +
+                        "\n";
 
-                if (cardsRecord != null) {
+                int count = 0;
+                int minId = 0;
+                int batchSize = 1000;
 
-                    for (String paragraph : paragraphs) {
-                        String line = Abilities.removeReminders(paragraph).trim();
-                        String deQuoted = line;
-                        Matcher m = Pattern.compile(Constant.betweenQuotes)
-                                .matcher(line);
-                        while (m.find()) {
-                            deQuoted = deQuoted.replace(m.group(), "");
+                do {
+                    PreparedStatement preparedStatement = sqliteConnection.prepareStatement(fromSqlite);
+                    preparedStatement.setInt(1, minId);
+                    ResultSet resultSet = preparedStatement.executeQuery();
+                    while (resultSet.next()) {
+                        String manaCost = resultSet.getString("manaCost");
+                        List<String> manaCostList = null;
+                        if (!StringUtils.isBlank(manaCost)) {
+                            manaCostList =
+                                    Arrays.stream(manaCost.split("\\{")).filter(StringUtils::isBlank).map(s ->
+                                            "{" + s).collect(Collectors.toList());
                         }
 
-                        if (line.startsWith("(")) {
-                            line = line.substring(1);
+                        String colorIdentity = resultSet.getString("colorIdentity");
+                        List<String> colorIdentityList = null;
+                        if (!StringUtils.isBlank(colorIdentity)) {
+                            colorIdentityList =
+                                    Arrays.asList(colorIdentity.split(""));
                         }
-                        if (line.endsWith(")")) {
-                            line = line.substring(0, line.length() - 2);
+
+                        String supertypes = resultSet.getString("supertypes");
+                        List<TypeDTO> supertypesList = null;
+                        if (!StringUtils.isBlank(supertypes)) {
+                            supertypesList =
+                                    Arrays.stream(supertypes.split(",")).filter(StringUtils::isBlank).map(TypeDTO::new).collect(Collectors.toList());
                         }
-                        if (deQuoted.contains(":")) {
-                            String[] split = line.split(":");
-                            String cost = split[0].trim();
-                            String ability = split[1].trim();
-                            NonstaticabilitiesRecord nonstaticabilitiesRecord = DatabaseFactory.getH2DSL().selectFrom(Nonstaticabilities.NONSTATICABILITIES).where(Nonstaticabilities.NONSTATICABILITIES.TEXT.like(ability)).fetchOne();
-                            if (nonstaticabilitiesRecord == null) {
-                                DatabaseFactory.getH2DSL().insertInto(Nonstaticabilities.NONSTATICABILITIES, Nonstaticabilities.NONSTATICABILITIES.TEXT).values(ability).execute();
-                                nonstaticabilitiesRecord = DatabaseFactory.getH2DSL().selectFrom(Nonstaticabilities.NONSTATICABILITIES).where(Nonstaticabilities.NONSTATICABILITIES.TEXT.like(ability)).fetchOne();
-                            } else {
-                                count++;
-                            }
-                            DatabaseFactory.getH2DSL().insertInto(Cardnonstaticabilities.CARDNONSTATICABILITIES,
-                                    Cardnonstaticabilities.CARDNONSTATICABILITIES.CARD,
-                                    Cardnonstaticabilities.CARDNONSTATICABILITIES.COST,
-                                    Cardnonstaticabilities.CARDNONSTATICABILITIES.NONSTATICABILITY).values(cardsRecord.value1(), cost, nonstaticabilitiesRecord.getId()).onDuplicateKeyIgnore().execute();
-                        } else {
-                            String[] strings = Abilities.parseStaticAbilities(line);
-                            for (String string : strings) {
-                                if (!StringUtils.isBlank(string)) {
-                                    NonstaticabilitiesRecord nonstaticabilitiesRecord = DatabaseFactory.getH2DSL().selectFrom(Nonstaticabilities.NONSTATICABILITIES).where(Nonstaticabilities.NONSTATICABILITIES.TEXT.like(string)).fetchOne();
-                                    if (nonstaticabilitiesRecord == null) {
-                                        DatabaseFactory.getH2DSL().insertInto(Nonstaticabilities.NONSTATICABILITIES, Nonstaticabilities.NONSTATICABILITIES.TEXT).values(string).execute();
-                                        nonstaticabilitiesRecord = DatabaseFactory.getH2DSL().selectFrom(Nonstaticabilities.NONSTATICABILITIES).where(Nonstaticabilities.NONSTATICABILITIES.TEXT.like(string)).fetchOne();
-                                    } else {
-                                        count++;
-                                    }
-                                    DatabaseFactory.getH2DSL().insertInto(Cardnonstaticabilities.CARDNONSTATICABILITIES,
-                                            Cardnonstaticabilities.CARDNONSTATICABILITIES.CARD,
-                                            Cardnonstaticabilities.CARDNONSTATICABILITIES.NONSTATICABILITY).values(cardsRecord.value1(), nonstaticabilitiesRecord.getId()).onDuplicateKeyIgnore().execute();
-                                }
-                            }
+
+                        String types = resultSet.getString("types");
+                        List<TypeDTO> typesList = null;
+                        if (!StringUtils.isBlank(types)) {
+                            typesList =
+                                    Arrays.stream(types.split(",")).filter(StringUtils::isBlank).map(TypeDTO::new).collect(Collectors.toList());
                         }
+
+                        String subtypes = resultSet.getString("subtypes");
+                        List<TypeDTO> subtypesList = null;
+                        if (!StringUtils.isBlank(subtypes)) {
+                            subtypesList =
+                                    Arrays.stream(subtypes.split(",")).filter(StringUtils::isBlank).map(TypeDTO::new).collect(Collectors.toList());
+                        }
+
+                        CardDTO cardDTO = new CardDTO(resultSet.getInt("multiverseId"),
+                                resultSet.getString("name"),
+                                resultSet.getInt("convertedManacost"),
+                                manaCostList,
+                                colorIdentityList,
+                                resultSet.getString("power"),
+                                resultSet.getString("toughness"),
+                                supertypesList, typesList, subtypesList, new ArrayList<>());
+
+                        cardDTO.toString();
                     }
-                }
+                } while (count >= 0);
+
             }
-            System.out.println(count);
-        } catch (DataAccessException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        DatabaseFactory.stop();
     }
-
 }

@@ -1,19 +1,29 @@
 package org.krosanavengers.mtg.bot.boardstate;
 
+import com.google.gson.annotations.Expose;
 import org.krosanavengers.mtg.bot.player.Player;
+import org.krosanavengers.mtg.bot.util.GsonUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class BoardState {
+    @Expose
     int depth;
+    @Expose
     List<Player> players;
+    @Expose
     Stack stack;
+    @Expose
     PriorityManager priorityManager;
+    @Expose
     PhaseStep phaseStep;
+    @Expose
     Player currentPlayer;
+    @Expose
     Player startingPlayer;
+
 
     public BoardState(Player... players) {
         this.priorityManager = new PriorityManager(this);
@@ -33,11 +43,10 @@ public class BoardState {
 
     @Override
     public String toString() {
-        String str = "BoardState{ Players{ ";
-        for (Player player : players) {
-            str += player.toString();
-        }
-        str += "} }";
-        return str;
+        return toJson();
+    }
+
+    public String toJson() {
+        return GsonUtil.toJson(this);
     }
 }

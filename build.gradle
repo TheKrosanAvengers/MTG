@@ -27,12 +27,10 @@ repositories {
 
 //Dependencies for Java build
 dependencies {
-    compile("com.h2database:h2:1.4.200")
-    compile("org.jooq:jooq:3.12.3")
-    compile("org.jooq:jooq-codegen:3.12.3")
-    compile("org.xerial:sqlite-jdbc:3.30.1")
-    compile("org.apache.commons:commons-lang3:3.9")
-    runtime 'com.h2database:h2:1.4.200'
+    implementation "com.h2database:h2:1.4.200"
+    implementation "org.xerial:sqlite-jdbc:3.30.1"
+    implementation "org.apache.commons:commons-lang3:3.9"
+    implementation "com.google.code.gson:gson:2.8.6"
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
@@ -47,60 +45,6 @@ task(startDB, dependsOn: 'classes', type: JavaExec) {
 //Settings for Java JUnit testing
 test {
     useJUnitPlatform()
-}
-
-//=======   Generate MTGJSON JooQ objects   ===============
-tasks.register("generateSQLITE") {
-    doLast {
-        def writer = new StringWriter()
-        def xml = new groovy.xml.MarkupBuilder(writer)
-                .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
-                    jdbc() {
-                        driver('org.sqlite.JDBC')
-                        url('jdbc:sqlite:AllPrintings.sqlite')
-                        user('sa')
-                        password('')
-                    }
-                    generator() {
-                        database() {
-                        }
-                        generate([:]) {
-                            pojos true
-                            daos true
-                        }
-                        target() {
-                            packageName('org.krosanavengers.mtg.jooq.mtgjson')
-                            directory('src/main/java')
-                        }
-                    }
-                }
-        org.jooq.codegen.GenerationTool.generate(writer.toString())
-    }
-}
-
-
-//=======   Create MTG JooQ objects   ===============
-tasks.register("generateH2") {
-    doLast {
-        def writer = new StringWriter()
-        def xml = new groovy.xml.MarkupBuilder(writer)
-                .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.12.0.xsd') {
-                    jdbc() {
-                        driver('org.h2.Driver')
-                        url('jdbc:h2:file:./mtg')
-                        user('sa')
-                    }
-                    generator() {
-                        database() {
-                        }
-                        target() {
-                            packageName('org.krosanavengers.mtg.jooq.h2')
-                            directory('src/main/java')
-                        }
-                    }
-                }
-        org.jooq.codegen.GenerationTool.generate(writer.toString())
-    }
 }
 
 

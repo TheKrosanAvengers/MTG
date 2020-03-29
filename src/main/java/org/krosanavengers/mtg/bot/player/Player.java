@@ -1,8 +1,9 @@
 package org.krosanavengers.mtg.bot.player;
 
+import com.google.gson.annotations.Expose;
 import org.krosanavengers.mtg.bot.boardstate.BoardState;
 import org.krosanavengers.mtg.bot.util.CardUtil;
-import org.krosanavengers.mtg.bot.util.ZoneUtil;
+import org.krosanavengers.mtg.bot.util.GsonUtil;
 import org.krosanavengers.mtg.bot.zones.*;
 import org.krosanavengers.mtg.exceptions.InsufficientCardsInZone;
 
@@ -10,9 +11,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Player implements Cloneable {
+    @Expose
     private Map<ZoneEnum, Zone> zoneMap = new HashMap<>();
+    @Expose
     private int life = 20;
+    @Expose
     private Player next;
+    @Expose
     private String name;
 
     public Player(String name) {
@@ -96,17 +101,10 @@ public class Player implements Cloneable {
 
     @Override
     public String toString() {
-        String str = "Player{" +
-                "name=" + name +
-                ", life=" + life +
-                ", Zones{ ";
-        for (ZoneEnum zoneEnum : this.zoneMap.keySet()) {
-            Zone zone = this.zoneMap.get(zoneEnum);
-            if (!ZoneUtil.isEmptyOrNull(zone)) {
-                str += zone.toString();
-            }
-        }
-        return str + "} }";
+        return toJson();
+    }
 
+    public String toJson() {
+        return GsonUtil.toJson(this);
     }
 }
